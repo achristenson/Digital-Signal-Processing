@@ -341,5 +341,4 @@ ylabel('Signal (uV)')
 % because the latency caused by the first pass of the IIR filter is undone
 % by doing the second pass. I think the reason why the amplitude for the
 % signal is slightly higher after two passes through the IIR is because the
-% group phase delay gets corrected and puts the correct frequencies at the
-% correct times, making the amplitude closer to the original signal.
+% group phase delay gets corrected and 
