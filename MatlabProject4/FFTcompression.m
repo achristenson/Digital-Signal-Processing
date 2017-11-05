@@ -7,11 +7,8 @@ function Yout = FFTcompression(signal,percentRetained)
 % kept.
 
 % Take the Fourier transform
-n = 2^ceil(log2(length(signal)));
+n = 2^nextpow2(length(signal));
 S = fft(signal,n);
-
-% Find the maximum amplitude of the signal in frequency domain
-m = max(abs(S));
 
 % Zero out the weaker frequency components and return the signal
 dummy = sort(abs(S));

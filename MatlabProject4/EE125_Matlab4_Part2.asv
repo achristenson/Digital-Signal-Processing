@@ -237,12 +237,6 @@ dctSnr50 = SNRoverall(yp,dctRecon50);
 dctSnr20 = SNRoverall(yp,dctRecon20);
 dctSnr10 = SNRoverall(yp,dctRecon10);
 
-% DCT SNR table
 dctT = table(dctSnr100,dctSnr50,dctSnr20,dctSnr10)
 
-% Listening to the differences between FFT, DCT compressions, 20% retained
-% soundsc(recon20,Fs)
-% soundsc(dctRecon20,Fs)
-% Oh wow, I actually found there to be a kind of significant difference in
-% the amount of noise you hear in the reconstructed signal. The DCT was
-% much cleaner.
+soundsc(
