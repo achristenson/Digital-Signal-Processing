@@ -1,0 +1,495 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>EE125_Matlab5</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2017-11-18"><meta name="DC.source" content="EE125_Matlab5.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Part 1: DFT based spectral analysis</a></li><li><a href="#3">Part 2: Periodogram-based spectral analysis</a></li><li><a href="#4">Part 3: Spectrogram</a></li></ul></div><pre class="codeinput"><span class="comment">% Alex Christenson EE125: Digital Signal Processing Matlab Project 5</span>
+<span class="comment">% Performing spectral analysis on measured data from an ocean acoustics</span>
+<span class="comment">% experiment</span>
+</pre><h2 id="2">Part 1: DFT based spectral analysis</h2><pre class="codeinput"><span class="comment">% Loading data from experiment</span>
+<span class="comment">% Contains sample frequency (1.5 kHz) and xstart, which is the time series</span>
+<span class="comment">% data for the start of the event, and xlater the time series data for</span>
+<span class="comment">% after the event</span>
+load(<span class="string">'Event59Data.mat'</span>)
+x = xstart;
+
+<span class="comment">% Use FFT to perform spectral analysis for the signal</span>
+<span class="comment">% Using a rectangular window</span>
+L = 512;
+xRect = x(1:L).*rectwin(L);
+XRect = fft(xRect,L);
+
+<span class="comment">% Using a hanning window</span>
+xHann = x(1:L).*hann(L);
+XHann = fft(xHann,L);
+
+<span class="comment">% Plot the magnitude squared in dB of the two spectrums</span>
+f = Fs/2*linspace(0,1,L/2+1); <span class="comment">% Create the frequency vector</span>
+XRectdB = mag2db(abs(XRect).^2); <span class="comment">% Calculate mag squared and convert to dB</span>
+XHanndB = mag2db(abs(XHann).^2);
+
+figure(1)
+
+plot(f,XRectdB(1:L/2+1),f,XHanndB(1:L/2+1));
+
+title(<span class="string">'Spectrum of windowed signal, L = 512'</span>)
+xlabel(<span class="string">'Frequency (Hz)'</span>)
+ylabel(<span class="string">'Magnitude squared (dB)'</span>)
+legend(<span class="string">'Rectangular'</span>,<span class="string">'Hanning'</span>)
+axis([0 750 -240 -70])
+
+<span class="comment">% No, for the 512 window length you cannot clearly see that there are two</span>
+<span class="comment">% tones around 200 Hz (at 198 and 201 Hz). For a window length of 512, the</span>
+<span class="comment">% mainlobe width is (for rectangular window):</span>
+<span class="comment">% 4pi/L = 4pi/512</span>
+<span class="comment">% to convert from radians to Hz:</span>
+<span class="comment">% 4pi/512 * Fs/2pi = 2*Fs/512 = 3000/512 = 5.8594 Hz.</span>
+<span class="comment">% For the hanning window, mainlobe width is 8pi/M, which is twice that for</span>
+<span class="comment">% the rectangular window, so the width is twice that for the</span>
+<span class="comment">% rectangular window: 11.72 Hz.</span>
+<span class="comment">% This tells us the bin width, and from this we can see that because the</span>
+<span class="comment">% bin width is greater than the separation between the two frequencies,</span>
+<span class="comment">% they will be unviewable.</span>
+
+<span class="comment">% Repeating for L = 2048</span>
+L = 2048;
+xRect2 = x(1:L).*rectwin(L);
+XRect2 = fft(xRect2,L);
+
+<span class="comment">% Using a hanning window</span>
+xHann2 = x(1:L).*hann(L);
+XHann2 = fft(xHann2,L);
+
+<span class="comment">% Plot the magnitude squared in dB of the two spectrums</span>
+f2 = Fs/2*linspace(0,1,L/2+1); <span class="comment">% Create the frequency vector</span>
+XRectdB2 = mag2db(abs(XRect2).^2); <span class="comment">% Calculate mag squared and convert to dB</span>
+XHanndB2 = mag2db(abs(XHann2).^2);
+
+figure(2)
+
+plot(f2,XRectdB2(1:L/2+1),f2,XHanndB2(1:L/2+1));
+
+title(<span class="string">'Spectrum of windowed signal, L = 2048'</span>)
+xlabel(<span class="string">'Frequency (Hz)'</span>)
+ylabel(<span class="string">'Magnitude squared (dB)'</span>)
+legend(<span class="string">'Rectangular'</span>,<span class="string">'Hanning'</span>)
+axis([0 750 -220 -40])
+
+<span class="comment">% Now that the window length is 2048 you can see the different toned</span>
+<span class="comment">% frequencies. This makes sense because following the equation from the</span>
+<span class="comment">% length equal to 512:</span>
+<span class="comment">% 3000/2048 = 1.46 Hz, and for the Hann window, 2.93 Hz. This means the</span>
+<span class="comment">% signals will be separable.</span>
+
+<span class="comment">% Repeating for L = 2048</span>
+L = 8192;
+xRect3 = x(1:L).*rectwin(L);
+XRect3 = fft(xRect3,L);
+
+<span class="comment">% Using a hanning window</span>
+xHann3 = x(1:L).*hann(L);
+XHann3 = fft(xHann3,L);
+
+<span class="comment">% Plot the magnitude squared in dB of the two spectrums</span>
+f3 = Fs/2*linspace(0,1,L/2+1); <span class="comment">% Create the frequency vector</span>
+XRectdB3 = mag2db(abs(XRect3).^2); <span class="comment">% Calculate mag squared and convert to dB</span>
+XHanndB3 = mag2db(abs(XHann3).^2);
+
+figure(3)
+
+plot(f3,XRectdB3(1:L/2+1),f3,XHanndB3(1:L/2+1));
+
+title(<span class="string">'Spectrum of windowed signal, L = 8192'</span>)
+xlabel(<span class="string">'Frequency (Hz)'</span>)
+ylabel(<span class="string">'Magnitude squared (dB)'</span>)
+legend(<span class="string">'Rectangular'</span>,<span class="string">'Hanning'</span>)
+axis([0 750 -200 -20])
+
+<span class="comment">% Looking at the graph from further increasing the number of points in the</span>
+<span class="comment">% window, the SNR does look like it improves because you can see more</span>
+<span class="comment">% significant spikes from where the tones we want to pick out are, so it</span>
+<span class="comment">% looks like the SNR is improving.</span>
+
+<span class="comment">% Using the normalization factors</span>
+<span class="comment">% Also, I used a different normalization factor</span>
+normRect = sum(rectwin(L).^2);
+normHann = sum(hann(L).^2);
+XRectdB3 = mag2db(abs(XRect3).^2/normRect); <span class="comment">% Calculate mag squared and convert to dB</span>
+XHanndB3 = mag2db(abs(XHann3).^2/normHann);
+
+figure(4)
+
+plot(f3,XRectdB3(1:L/2+1),f3,XHanndB3(1:L/2+1));
+
+title(<span class="string">'Normalized spectrum of windowed signal, L = 8192'</span>)
+xlabel(<span class="string">'Frequency (Hz)'</span>)
+ylabel(<span class="string">'Magnitude squared (dB)'</span>)
+legend(<span class="string">'Rectangular'</span>,<span class="string">'Hanning'</span>)
+<span class="comment">% axis([0 750 -200 -20])</span>
+
+<span class="comment">% Yay they match more closely now :)</span>
+</pre><img vspace="5" hspace="5" src="EE125_Matlab5_01.png" alt=""> <img vspace="5" hspace="5" src="EE125_Matlab5_02.png" alt=""> <img vspace="5" hspace="5" src="EE125_Matlab5_03.png" alt=""> <img vspace="5" hspace="5" src="EE125_Matlab5_04.png" alt=""> <h2 id="3">Part 2: Periodogram-based spectral analysis</h2><pre class="codeinput">L = 4096;
+[bartRect,f1] = pwelch(x,rectwin(L),0,L,Fs);
+[bartHann,f2] = pwelch(x,hann(L),0,L,Fs);
+
+[rect50,f1] = pwelch(x,rectwin(L),0.5*L,L,Fs);
+[hann50,f2] = pwelch(x,hann(L),0.5*L,L,Fs);
+
+[rect75,f1] = pwelch(x,rectwin(L),0.75*L,L,Fs);
+[hann75,f2] = pwelch(x,hann(L),0.75*L,L,Fs);
+
+figure(5)
+subplot(3,1,1)
+plot(f1,mag2db(bartRect),f2,mag2db(bartHann));
+title(<span class="string">'Windowed signals of varying overlap, L=4096, 0% overlap'</span>)
+xlabel(<span class="string">'Frequency (Hz)'</span>)
+ylabel(<span class="string">'Power (dB)'</span>)
+legend(<span class="string">'Rectangular'</span>,<span class="string">'Hanning'</span>)
+
+subplot(3,1,2)
+plot(f1,mag2db(rect50),f2,mag2db(hann50));
+title(<span class="string">'Windowed signals of varying overlap, L=4096, 50% overlap'</span>)
+xlabel(<span class="string">'Frequency (Hz)'</span>)
+ylabel(<span class="string">'Power (dB)'</span>)
+legend(<span class="string">'Rectangular'</span>,<span class="string">'Hanning'</span>)
+
+subplot(3,1,3)
+plot(f1,mag2db(rect75),f2,mag2db(hann75));
+title(<span class="string">'Windowed signals of varying overlap, L=4096, 75% overlap'</span>)
+xlabel(<span class="string">'Frequency (Hz)'</span>)
+ylabel(<span class="string">'Power (dB)'</span>)
+legend(<span class="string">'Rectangular'</span>,<span class="string">'Hanning'</span>)
+
+<span class="comment">% It's hard to see from the graph (also apologies for not having a title</span>
+<span class="comment">% for all of the subplots, but I'm using the new version of matlab and</span>
+<span class="comment">% suptitle no longer works) but if you zoom in you can see the variance</span>
+<span class="comment">% being reduced by the varying magnitudes in the noise around the signal</span>
+<span class="comment">% becoming more consistent and approaching the expected value of the noise.</span>
+<span class="comment">% As for the differences between the Hanning and Rectangular windows I know</span>
+<span class="comment">% there probably should be some small difference but I can't see it really</span>
+<span class="comment">% compound when looking at the graph.</span>
+
+<span class="comment">% Will calculate quality factor and variance later</span>
+
+<span class="comment">% Applying the periodogram to the xlater data</span>
+[pl,fl] = pwelch(xlater,hann(L),0.75*L,L,Fs);
+
+figure(6)
+plot(fl,mag2db(pl))
+title(<span class="string">'Periodogram for xlater data'</span>)
+xlabel(<span class="string">'Frequency (Hz)'</span>)
+ylabel(<span class="string">'Power (dB)'</span>)
+axis([0 750 -240 -150])
+
+<span class="comment">% I did notice that there are a bunch of really powerful harmonics</span>
+<span class="comment">% appearing in the spectral analysis now, and the variance for the noise</span>
+<span class="comment">% might be much higher compared to the same averaging for the last data</span>
+<span class="comment">% set.</span>
+</pre><img vspace="5" hspace="5" src="EE125_Matlab5_05.png" alt=""> <img vspace="5" hspace="5" src="EE125_Matlab5_06.png" alt=""> <h2 id="4">Part 3: Spectrogram</h2><pre class="codeinput">a = -150;
+b = -75;
+
+figure(7)
+spectrogram(x,hann(L),0.75*L,L,Fs);
+caxis([a b]); colorbar
+title(<span class="string">'Spectrogram for start data, hann, 75% overlap, L=4096'</span>)
+
+figure(8)
+spectrogram(xlater,hann(L),0.75*L,L,Fs);
+title(<span class="string">'Spectrogram for later data, hann, 75% overlap, L=4096'</span>)
+caxis([a b]); colorbar
+
+<span class="comment">% The later data has a lot of consistency in the time domain and contains a</span>
+<span class="comment">% lot more stronger components at regular intervals and higher frequencies.</span>
+
+load(<span class="string">'Event59Data_20min.mat'</span>)
+figure(9)
+spectrogram(xbig,hann(L),0.75*L,L,Fs);
+caxis([a b]); colorbar
+title(<span class="string">'Spectrogram for long data, hann, 75% overlap, L=4096'</span>)
+
+<span class="comment">% This spectrogram over a long period of data is really interesting because</span>
+<span class="comment">% you can see where different events happen. Like some sort of event</span>
+<span class="comment">% happens at around 10 minutes that causes a spike in a contained range of</span>
+<span class="comment">% low frequency signals.</span>
+</pre><img vspace="5" hspace="5" src="EE125_Matlab5_07.png" alt=""> <img vspace="5" hspace="5" src="EE125_Matlab5_08.png" alt=""> <img vspace="5" hspace="5" src="EE125_Matlab5_09.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% Alex Christenson EE125: Digital Signal Processing Matlab Project 5
+% Performing spectral analysis on measured data from an ocean acoustics
+% experiment
+
+%% Part 1: DFT based spectral analysis
+
+% Loading data from experiment
+% Contains sample frequency (1.5 kHz) and xstart, which is the time series
+% data for the start of the event, and xlater the time series data for
+% after the event
+load('Event59Data.mat')
+x = xstart;
+
+% Use FFT to perform spectral analysis for the signal
+% Using a rectangular window
+L = 512;
+xRect = x(1:L).*rectwin(L);
+XRect = fft(xRect,L);
+
+% Using a hanning window
+xHann = x(1:L).*hann(L);
+XHann = fft(xHann,L);
+
+% Plot the magnitude squared in dB of the two spectrums 
+f = Fs/2*linspace(0,1,L/2+1); % Create the frequency vector
+XRectdB = mag2db(abs(XRect).^2); % Calculate mag squared and convert to dB
+XHanndB = mag2db(abs(XHann).^2);
+
+figure(1)
+
+plot(f,XRectdB(1:L/2+1),f,XHanndB(1:L/2+1));
+
+title('Spectrum of windowed signal, L = 512')
+xlabel('Frequency (Hz)')
+ylabel('Magnitude squared (dB)')
+legend('Rectangular','Hanning')
+axis([0 750 -240 -70])
+
+% No, for the 512 window length you cannot clearly see that there are two
+% tones around 200 Hz (at 198 and 201 Hz). For a window length of 512, the
+% mainlobe width is (for rectangular window):
+% 4pi/L = 4pi/512
+% to convert from radians to Hz:
+% 4pi/512 * Fs/2pi = 2*Fs/512 = 3000/512 = 5.8594 Hz.
+% For the hanning window, mainlobe width is 8pi/M, which is twice that for
+% the rectangular window, so the width is twice that for the
+% rectangular window: 11.72 Hz.
+% This tells us the bin width, and from this we can see that because the
+% bin width is greater than the separation between the two frequencies,
+% they will be unviewable.
+
+% Repeating for L = 2048
+L = 2048;
+xRect2 = x(1:L).*rectwin(L);
+XRect2 = fft(xRect2,L);
+
+% Using a hanning window
+xHann2 = x(1:L).*hann(L);
+XHann2 = fft(xHann2,L);
+
+% Plot the magnitude squared in dB of the two spectrums 
+f2 = Fs/2*linspace(0,1,L/2+1); % Create the frequency vector
+XRectdB2 = mag2db(abs(XRect2).^2); % Calculate mag squared and convert to dB
+XHanndB2 = mag2db(abs(XHann2).^2);
+
+figure(2)
+
+plot(f2,XRectdB2(1:L/2+1),f2,XHanndB2(1:L/2+1));
+
+title('Spectrum of windowed signal, L = 2048')
+xlabel('Frequency (Hz)')
+ylabel('Magnitude squared (dB)')
+legend('Rectangular','Hanning')
+axis([0 750 -220 -40])
+
+% Now that the window length is 2048 you can see the different toned
+% frequencies. This makes sense because following the equation from the
+% length equal to 512:
+% 3000/2048 = 1.46 Hz, and for the Hann window, 2.93 Hz. This means the
+% signals will be separable.
+
+% Repeating for L = 2048
+L = 8192;
+xRect3 = x(1:L).*rectwin(L);
+XRect3 = fft(xRect3,L);
+
+% Using a hanning window
+xHann3 = x(1:L).*hann(L);
+XHann3 = fft(xHann3,L);
+
+% Plot the magnitude squared in dB of the two spectrums 
+f3 = Fs/2*linspace(0,1,L/2+1); % Create the frequency vector
+XRectdB3 = mag2db(abs(XRect3).^2); % Calculate mag squared and convert to dB
+XHanndB3 = mag2db(abs(XHann3).^2);
+
+figure(3)
+
+plot(f3,XRectdB3(1:L/2+1),f3,XHanndB3(1:L/2+1));
+
+title('Spectrum of windowed signal, L = 8192')
+xlabel('Frequency (Hz)')
+ylabel('Magnitude squared (dB)')
+legend('Rectangular','Hanning')
+axis([0 750 -200 -20])
+
+% Looking at the graph from further increasing the number of points in the
+% window, the SNR does look like it improves because you can see more
+% significant spikes from where the tones we want to pick out are, so it
+% looks like the SNR is improving.
+
+% Using the normalization factors
+% Also, I used a different normalization factor
+normRect = sum(rectwin(L).^2);
+normHann = sum(hann(L).^2);
+XRectdB3 = mag2db(abs(XRect3).^2/normRect); % Calculate mag squared and convert to dB
+XHanndB3 = mag2db(abs(XHann3).^2/normHann);
+
+figure(4)
+
+plot(f3,XRectdB3(1:L/2+1),f3,XHanndB3(1:L/2+1));
+
+title('Normalized spectrum of windowed signal, L = 8192')
+xlabel('Frequency (Hz)')
+ylabel('Magnitude squared (dB)')
+legend('Rectangular','Hanning')
+% axis([0 750 -200 -20])
+
+% Yay they match more closely now :)
+
+%% Part 2: Periodogram-based spectral analysis
+L = 4096;
+[bartRect,f1] = pwelch(x,rectwin(L),0,L,Fs);
+[bartHann,f2] = pwelch(x,hann(L),0,L,Fs);
+
+[rect50,f1] = pwelch(x,rectwin(L),0.5*L,L,Fs);
+[hann50,f2] = pwelch(x,hann(L),0.5*L,L,Fs);
+
+[rect75,f1] = pwelch(x,rectwin(L),0.75*L,L,Fs);
+[hann75,f2] = pwelch(x,hann(L),0.75*L,L,Fs);
+
+figure(5)
+subplot(3,1,1)
+plot(f1,mag2db(bartRect),f2,mag2db(bartHann));
+title('Windowed signals of varying overlap, L=4096, 0% overlap')
+xlabel('Frequency (Hz)')
+ylabel('Power (dB)')
+legend('Rectangular','Hanning')
+
+subplot(3,1,2)
+plot(f1,mag2db(rect50),f2,mag2db(hann50));
+title('Windowed signals of varying overlap, L=4096, 50% overlap')
+xlabel('Frequency (Hz)')
+ylabel('Power (dB)')
+legend('Rectangular','Hanning')
+
+subplot(3,1,3)
+plot(f1,mag2db(rect75),f2,mag2db(hann75));
+title('Windowed signals of varying overlap, L=4096, 75% overlap')
+xlabel('Frequency (Hz)')
+ylabel('Power (dB)')
+legend('Rectangular','Hanning')
+
+% It's hard to see from the graph (also apologies for not having a title
+% for all of the subplots, but I'm using the new version of matlab and
+% suptitle no longer works) but if you zoom in you can see the variance
+% being reduced by the varying magnitudes in the noise around the signal
+% becoming more consistent and approaching the expected value of the noise.
+% As for the differences between the Hanning and Rectangular windows I know
+% there probably should be some small difference but I can't see it really
+% compound when looking at the graph.
+
+% Will calculate quality factor and variance later
+
+% Applying the periodogram to the xlater data
+[pl,fl] = pwelch(xlater,hann(L),0.75*L,L,Fs);
+
+figure(6)
+plot(fl,mag2db(pl))
+title('Periodogram for xlater data')
+xlabel('Frequency (Hz)')
+ylabel('Power (dB)')
+axis([0 750 -240 -150])
+
+% I did notice that there are a bunch of really powerful harmonics
+% appearing in the spectral analysis now, and the variance for the noise
+% might be much higher compared to the same averaging for the last data
+% set.
+
+%% Part 3: Spectrogram
+a = -150;
+b = -75;
+
+figure(7)
+spectrogram(x,hann(L),0.75*L,L,Fs);
+caxis([a b]); colorbar
+title('Spectrogram for start data, hann, 75% overlap, L=4096')
+
+figure(8)
+spectrogram(xlater,hann(L),0.75*L,L,Fs);
+title('Spectrogram for later data, hann, 75% overlap, L=4096')
+caxis([a b]); colorbar
+
+% The later data has a lot of consistency in the time domain and contains a
+% lot more stronger components at regular intervals and higher frequencies.
+
+load('Event59Data_20min.mat')
+figure(9)
+spectrogram(xbig,hann(L),0.75*L,L,Fs);
+caxis([a b]); colorbar
+title('Spectrogram for long data, hann, 75% overlap, L=4096')
+
+% This spectrogram over a long period of data is really interesting because
+% you can see where different events happen. Like some sort of event
+% happens at around 10 minutes that causes a spike in a contained range of
+% low frequency signals.
+##### SOURCE END #####
+--></body></html>
